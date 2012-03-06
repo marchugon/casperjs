@@ -1,16 +1,30 @@
-phantom.injectJs('casper.js');
-
-var casper = new phantom.Casper({
-    logLevel: "debug",
-    verbose: true
+/**
+ * This script will capture a screenshot of a twitter account page
+ *
+ * Usage $ casperjs screenshot.coffee <twitter-account> <filename.[jpg|png|pdf]>
+ */
+var casper = require('casper').create({
+    viewportSize: {
+        width: 1024,
+        height: 768
+    }
 });
 
-casper.start('https://twitter.com/#!/twilio', function(self) {
-    self.waitForSelector('.tweet-row', function(self) {
-        self.captureSelector('twitter.png', 'html');
-    }, null, 12000);
+var twitterAccount = casper.cli.get(0);
+var filename = casper.cli.get(1);
+
+if (!twitterAccount || !filename || !/\.(png|jpg|pdf)$/i.test(filename)) {
+    casper.echo("Usage $ casperjs samples/screenshot.coffee <twitter-account> <filename.[jpg|png|pdf]>");
+    casper.exit();
+}
+
+casper.start('https://twitter.com/#!/' + twitterAccount, function() {
+    this.waitForSelector('.tweet-row', function() {
+        this.captureSelector(filename, 'html');
+        this.echo("Saved screenshot of " + this.getCurrentUrl() + " to " + filename);
+    }, function() {
+        this.die('Timeout reached. Fail whale?').exit();
+    }, 12000);
 });
 
-casper.run(function(self) {
-    self.exit();
-});
+casper.run();

@@ -1,16 +1,17 @@
-# get multiple pages of google search results
-#
-#   usage:  phantomjs googlepagination.coffee my search terms
-#
-#   (all arguments will be used as the query)
-#
-phantom.injectJs('casper.js')
+""" Capture multiple pages of google search results
 
-links = []
-casper = new phantom.Casper
+    usage:  casperjs googlepagination.coffee my search terms
+
+    (all arguments will be used as the query)
+"""
+casper = require('casper').create()
+
+if casper.cli.args.length == 0
+  casper.echo "usage: $ casperjs my search terms"
+  casper.exit()
 
 casper.start 'http://google.com', ->
-  @fill 'form[name=f]',  q: phantom.args.join(' '), true
+  @fill 'form[name=f]',  q: casper.cli.args.join(' '), true
   @click 'input[value="Google Search"]'
 
 casper.then ->
@@ -26,15 +27,15 @@ casper.then ->
 
       cspr.evaluate ->
         if nextLink = document.querySelector('table#nav td.cur').nextElementSibling?.querySelector('a')
-          nextLink.setAttribute 'id', 'next-page-of-results'
+          nextLink.setAttribute "id", "next-page-of-results"
 
-      nextPage = 'a#next-page-of-results'
+      nextPage = "a#next-page-of-results"
       if cspr.exists nextPage
-        cspr.echo 'requesting next page...'
+        cspr.echo "requesting next page..."
         cspr.thenClick(nextPage).then(processPage)
       else
         cspr.echo "that's all, folks."
 
     processPage(casper)
 
-casper.run -> @exit()
+casper.run()

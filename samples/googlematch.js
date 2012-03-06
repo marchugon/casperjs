@@ -3,30 +3,28 @@
  * estimated results each have.
  *
  * Usage:
- *   $ phantomjs samples/googlematch.js nicolas chuck borris
+ *   $ casperjs samples/googlematch.js nicolas chuck borris
  *   nicolas: 69600000
  *   chuck:   49500000
  *   borris:  2370000
  *   winner is "nicolas" with 69600000 results
  */
-phantom.injectJs('casper.js');
-
-phantom.Casper.extend({
-    fetchScore: function() {
-        return this.evaluate(function() {
-            var result = document.querySelector('#resultStats').innerText;
-            return Number(/Environ ([0-9\s]{1,}).*/.exec(result)[1].replace(/\s/g, ''));
-        });
-    }
-});
-
-var casper = new phantom.Casper({
+var casper = new require('casper').create({
     verbose: true
-}), terms = phantom.args, scores = [], i = 0;
+}), terms = casper.cli.args, scores = [], i = 0;
+
+casper.fetchScore = function() {
+    return this.evaluate(function() {
+        var result = document.querySelector('#resultStats').innerText;
+        return ~~(/Environ ([0-9\s]{1,}).*/.exec(result)[1].replace(/\s/g, ''));
+    });
+};
 
 if (terms.length < 2) {
-    casper.log('usage: phantomjs googlematch.js term1, term2 [, term3]...').exit();
+    casper.echo('Usage: casperjs googlematch.js term1, term2 [, term3]...').exit();
 }
+
+casper.echo('Let the match begin!');
 
 casper.start("http://google.fr/");
 
@@ -45,10 +43,9 @@ casper.each(terms, function(self, term, i) {
 
 casper.run(function(self) {
     scores.sort(function(a, b) {
-        return a.score - b.score;
+        return b.score - a.score;
     });
-    var winner = scores[scores.length - 1];
-    self.echo('winner is "' + winner.term + '" with ' + winner.score + ' results')
+    var winner = scores[0];
+    self.echo('winner is "' + winner.term + '" with ' + winner.score + ' results');
     self.exit();
 });
-

@@ -1,6 +1,4 @@
-phantom.injectJs("casper.js");
-
-var casper = new phantom.Casper({
+var casper = require('casper').create({
     logLevel: "debug"
 });
 

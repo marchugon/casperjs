@@ -1,12 +1,10 @@
-phantom.injectJs('casper.js');
-
 var links = [];
-var casper = new phantom.Casper();
+var casper = require('casper').create();
 
 function getLinks() {
     var links = document.querySelectorAll('h3.r a');
     return Array.prototype.map.call(links, function(e) {
-        return e.getAttribute('href')
+        return e.getAttribute('href');
     });
 }
 

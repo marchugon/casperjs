@@ -1,10 +1,11 @@
-phantom.injectJs('casper.js');
-
-var links = [];
-var casper = new phantom.Casper({
+/**
+ * This script will add a custom HTTP status code handler, here for 404 pages.
+ *
+ */
+var casper = require('casper').create({
     httpStatusHandlers: {
         404: function(self, resource) {
-            self.echo('Resource at ' + resource.url + ' not found (404)');
+            self.echo('Resource at ' + resource.url + ' not found (404)', 'COMMENT');
         }
     },
     verbose: true
@@ -13,4 +14,5 @@ var casper = new phantom.Casper({
 casper.start('http://www.google.com/plop', function(self) {
     self.echo('Done.').exit();
 });
+
 casper.run();

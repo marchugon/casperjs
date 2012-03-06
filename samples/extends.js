@@ -1,51 +1,36 @@
-phantom.injectJs("casper.js");
-
-var articles = [];
-
-/**
- * Adds two new methods to the Casper prototype: fetchTexts and renderJSON.
- */
-phantom.Casper.extend({
-    /**
-     * Adds a new navigation step for casper; basically it will:
-     *
-     * 1. open an url,
-     * 2. on loaded, will fetch all contents retrieved through the provided
-     *    CSS3 selector and return them in a formatted object.
-     */
-    fetchTexts: function(location, selector) {
-        return this.thenOpen(location, function(self) {
-            var texts = self.evaluate(function() {
-                var elements = document.querySelectorAll('%selector%');
-                return Array.prototype.map.call(elements, function(e) {
-                    return e.innerText;
-                });
-            }, {
-                selector: selector.replace("'", "\'")
-            });
-            articles = articles.concat(texts);
-        });
-    },
-
-    /**
-     * Echoes a JSON output of the fetched results and exits phantomjs.
-     */
-    renderJSON: function(what) {
-        return this.echo(JSON.stringify(what, null, '  ')).exit();
-    }
-});
-
-var casper = new phantom.Casper({
+var casper = require('casper').create({
     loadImages:  false,
-    loadPlugins: false,
-    logLevel:    "debug",
-    verbose:     true,
+    logLevel:   "debug",
+    verbose:    true
 });
 
-casper.start()
-    .fetchTexts('http://www.liberation.fr/', 'h3')      // all article titles are stored in <h3>
-    .fetchTexts('http://www.lemonde.fr/', 'h2.article') // all article titles are stored in <h2 class="article">
-    .run(function(self) {
-        self.renderJSON(articles);
-    })
-;
+var links = {
+    'http://edition.cnn.com/': 0,
+    'http://www.nytimes.com/': 0,
+    'http://www.bbc.co.uk/': 0,
+    'http://www.guardian.co.uk/': 0
+};
+
+var fantomas = Object.create(casper);
+
+fantomas.countLinks = function(selector) {
+    return this.evaluate(function() {
+        return __utils__.findAll('a[href]').length;
+    });
+};
+
+fantomas.renderJSON = function(what) {
+    return this.echo(JSON.stringify(what, null, '  '));
+};
+
+fantomas.start();
+
+Object.keys(links).forEach(function(url) {
+    fantomas.thenOpen(url, function() {
+        links[url] = this.countLinks();
+    });
+});
+
+fantomas.run(function() {
+    this.renderJSON(links).exit();
+});
